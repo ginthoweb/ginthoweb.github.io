@@ -1,0 +1,45 @@
+const nav=[['index.html','Home'],['crono.html','GinTho Crono'],['timing.html','GinTho Timing'],['soci.html','Area Soci'],['supporto.html','Supporto'],['sport.html','GinTho Sport'],['contatti.html','Contatti']];
+const current=location.pathname.split('/').pop()||'index.html';
+document.querySelector('#header').innerHTML=`<header class="header"><div class="container nav"><a href="index.html" class="brand" aria-label="GinTho Home"><img class="brand-logo" src="assets/gintho-logo-web.png" alt="GinTho — Sport Timing Systems"></a><button class="menu-toggle" aria-controls="navlinks" aria-expanded="false" aria-label="Apri menu">☰</button><nav id="navlinks" class="links" aria-label="Navigazione principale">${nav.map(([url,label])=>`<a href="${url}" class="${url===current?'active':''}" ${url===current?'aria-current="page"':''}>${label}</a>`).join('')}</nav></div></header>`;
+document.querySelector('.menu-toggle').addEventListener('click',e=>{let n=document.querySelector('#navlinks');let open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open?'true':'false');e.currentTarget.textContent=open?'✕':'☰'});
+document.querySelector('#footer').innerHTML=`<footer class="footer"><div class="container"><div class="footer-grid"><div><a href="index.html" class="brand"><img class="brand-logo" src="assets/gintho-logo-web.png" alt="GinTho — Sport Timing Systems"></a><p class="muted" style="margin-top:18px;max-width:330px">Soluzioni digitali dedicate al cronometraggio e alla gestione delle manifestazioni sportive.</p></div><div><strong>Software</strong><a href="crono.html">GinTho Crono</a><a href="timing.html">GinTho Timing</a><a href="supporto.html">Download e supporto</a></div><div><strong>Informazioni</strong><a href="sport.html">GinTho Sport</a><a href="soci.html">Area Soci</a><a href="contatti.html">Contatti</a><a href="privacy.html">Privacy</a></div></div><div class="fine">© <span id="year"></span> GinTho — Prototipo dimostrativo. I collegamenti a download, store e assistenza saranno attivati dopo la verifica dei riferimenti ufficiali.</div></div></footer>`;document.querySelector('#year').textContent=new Date().getFullYear();
+
+
+// v0.4 — lightbox for authentic screenshots
+(function(){
+const overlay=document.createElement('div');overlay.className='lightbox';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Visualizzazione ingrandita');overlay.innerHTML='<button type="button" class="lightbox-close" aria-label="Chiudi immagine">✕ Chiudi</button><img alt=""><p></p>';document.body.append(overlay);
+const im=overlay.querySelector('img'),desc=overlay.querySelector('p');let previous=null;
+function close(){overlay.classList.remove('open');document.body.style.overflow='';if(previous)previous.focus()}
+document.querySelectorAll('[data-full]').forEach(b=>b.addEventListener('click',()=>{previous=b;im.src=b.dataset.full;im.alt=b.dataset.alt||'';desc.textContent=b.dataset.alt||'';overlay.classList.add('open');document.body.style.overflow='hidden';overlay.querySelector('button').focus()}));
+overlay.querySelector('button').addEventListener('click',close);overlay.addEventListener('click',e=>{if(e.target===overlay)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('open'))close()});
+})();
+
+// v0.5 — client-side request drafting: no server, tracking, or submission
+(function(){const form=document.querySelector('#demo-request');if(!form)return;const output=document.querySelector('#demo-output');const box=document.querySelector('#demo-text');form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;const v=id=>document.querySelector('#'+id).value.trim();box.value=`Oggetto: Richiesta demo GinTho Timing\n\nBuongiorno,\nvorrei ricevere informazioni per partecipare alla prova di GinTho Timing Beta.\n\nNome: ${v('req-name')}\nEmail: ${v('req-mail')}\nProfilo: ${v('req-role')}\nUtilizzo previsto: ${v('req-msg')||'Non specificato'}\n\nResto in attesa delle modalità di accesso e dei requisiti della demo.\nCordiali saluti.`;output.hidden=false;output.scrollIntoView({behavior:'smooth',block:'nearest'});});document.querySelector('#copy-request').addEventListener('click',async()=>{const status=document.querySelector('#copy-status');try{if(!navigator.clipboard)throw Error();await navigator.clipboard.writeText(box.value);status.textContent='Testo copiato. Puoi incollarlo nel tuo programma email.'}catch(err){box.focus();box.select();status.textContent='Seleziona e copia il testo evidenziato.'}})})();
+
+// v0.7: simulazioni solo in memoria, senza trasmissioni o archiviazione.
+const membershipForm=document.querySelector('#membership-demo');
+if(membershipForm){membershipForm.addEventListener('submit',event=>{event.preventDefault();const vals=new FormData(membershipForm);const name=String(vals.get('name')||'');const mail=String(vals.get('email')||'');if(!mail.toLowerCase().endsWith('.invalid')){document.querySelector('#membership-result').textContent='Usa un indirizzo fittizio con dominio .invalid (es. mario@example.invalid).';return;}const result=document.querySelector('#membership-result');result.textContent='';const h=document.createElement('h3');h.textContent='Riepilogo dimostrativo';result.append(h);for(const [label,value] of [['Nominativo',name],['Email fittizia',mail],['Interesse',String(vals.get('kind')||'')],['Stato','Bozza locale, NON INVIATA']]){const line=document.createElement('p');const strong=document.createElement('strong');strong.textContent=label+': ';line.append(strong,document.createTextNode(value));result.append(line);}});membershipForm.addEventListener('reset',()=>{document.querySelector('#membership-result').textContent='Nessun dato inserito. Simulazione azzerata.';});}
+const sampleState=document.querySelector('#sample-state');if(sampleState){sampleState.addEventListener('change',()=>{document.querySelector('#sample-state-note').textContent='Stato dimostrativo: '+sampleState.value+'. Nessun cambiamento registrato.';});}
+
+// v0.8 — ephemeral in-memory demonstration ONLY. No storage or external communication.
+(function(){
+const mem=document.querySelector('#membership-demo'), sport=document.querySelector('#sport-demo');if(!mem||!sport)return;
+const el=id=>document.getElementById(id);let bound=false,days=0;let events=[];
+function log(s){events.unshift(s);events=events.slice(0,7);el('license-log').innerHTML=events.map(x=>'<li>'+x+'</li>').join('')}
+function eligible(){return mem.value==='active'&&sport.value==='on'}
+function render(){const ok=eligible();if(!ok&&bound){bound=false;log('Autorizzazione revocata nella simulazione: requisiti non validi.')}
+el('eligibility-note').textContent=ok?'Idoneità simulata: richiesta di attivazione consentita.':'Attivazione bloccata: servono socio ammesso e abilitazione SPORT.';
+el('device-label').textContent=bound?'Android demo A · autorizzato':'Nessuno';el('device-key').textContent=bound?'Keystore demo (identificativo fittizio)':'Non associata';
+el('license-label').textContent=!bound?'Non attiva':days<30?'Valida nella simulazione': 'Scaduta nella simulazione';
+el('days-value').textContent=String(days);el('offline-status').textContent=!bound?'Nessuna licenza attiva.':days<30?`Licenza demo valida: ${30-days} giorni restanti.`:'30 giorni superati: richiedere verifica online prima di una nuova sessione.';
+el('bind-device').disabled=!ok||bound;el('unbind-device').disabled=!bound;el('renew-demo').disabled=!bound;
+}
+mem.addEventListener('change',()=>{log('Stato associativo aggiornato (solo demo).');render()});sport.addEventListener('change',()=>{log('Abilitazione SPORT modificata (solo demo).');render()});
+el('bind-device').addEventListener('click',()=>{if(!eligible()||bound)return;bound=true;days=0;el('elapsed-days').value=0;log('Dispositivo demo A associato con chiave simulata.');render()});
+el('unbind-device').addEventListener('click',()=>{if(!bound)return;bound=false;log('Dispositivo disassociato nella demo.');render()});
+el('elapsed-days').addEventListener('input',e=>{days=Number(e.target.value);render()});
+el('renew-demo').addEventListener('click',()=>{if(!bound)return;days=0;el('elapsed-days').value=0;log('Rinnovo online simulato: 30 giorni.');render()});
+el('reset-license-demo').addEventListener('click',()=>{mem.value='pending';sport.value='off';bound=false;days=0;el('elapsed-days').value=0;events=[];log('Simulazione ripristinata.');render()});render();
+})();
+(function(){const r=document.getElementById('transfer-result');if(!r)return;document.querySelectorAll('[data-transfer]').forEach(b=>b.addEventListener('click',()=>{r.textContent=b.dataset.transfer==='ordinary'?'Simulazione: dopo accesso online e verifica SPORT, il dispositivo precedente viene revocato; il nuovo potrà effettuare una nuova attivazione. Nessuna modifica reale.':'Simulazione: richiesta di emergenza in attesa di verifica manuale. Non è consentita una seconda attivazione automatica né simultanea. Nessun ticket reale creato.'}));})();

@@ -1,0 +1,2 @@
+Questo prototipo usa solo HTML, CSS e JavaScript, senza dipendenze esterne.
+Loghi, schermate ufficiali, prezzi e URL di download sono da completare.
