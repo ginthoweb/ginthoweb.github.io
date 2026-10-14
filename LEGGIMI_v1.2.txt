@@ -1,0 +1,9 @@
+GinTho Web v1.2 — Community
+
+Novità: GinTho Sport Community come progetto futuro; nessun riferimento pubblico ad ASD, tesseramenti o quote. Percorsi precedenti sostituiti con pagine neutrali (caricare ANCHE queste per sovrascrivere i vecchi URL).
+
+PUBBLICAZIONE: carica TUTTO il contenuto della cartella gintho_sito_prototipo nella root del repository ginthoweb.github.io, senza aggiungere la cartella contenitore. Su GitHub verifica che community.html e assets/site.js siano aggiornati.
+
+Le pagine sostitutive per i vecchi indirizzi sono noindex, non raccolgono dati, non espongono console demo. La vecchia logica licenze resta recuperabile negli archivi precedenti, non in questo pacchetto pubblico.
+
+Privacy da rivalutare quando cambieranno servizi o trattamenti.
