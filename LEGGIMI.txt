@@ -1,0 +1,15 @@
+GinTho Web v0.9 — prototipo offline
+
+Aprire index.html in Chrome/Edge. I link funzionano anche da cartella locale.
+
+Novità:
+- Gallerie Crono e Timing con didascalie separate dalle immagini (fix sovrapposizione).
+- Adattamento smartphone e pannelli più leggibili.
+- Testi di presentazione aggiornati su Home e pagine software.
+- Nuove FAQ su SPORT offline, cambio dispositivo e demo.
+
+AREA SOCI E LICENZE: esclusivamente dimostrative. Nessuna autenticazione,
+richiesta di adesione, pagamento, invio dati o attivazione reali.
+La richiesta demo produce solo un testo copiabile.
+Non pubblicare come servizio definitivo prima di completare recapiti, privacy,
+condizioni associative e verifiche distributive.
