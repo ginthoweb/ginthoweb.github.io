@@ -1,0 +1,7 @@
+GinTho Web v1.2.1 — Correzioni
+- GinTho Sport Community: pagina unica sport.html.
+- La vecchia community.html reindirizza a sport.html ed è noindex.
+- Menu e footer mostrano una sola voce GinTho Sport Community.
+- Aggiornate le frasi di disponibilità SPORT e release pubblica Timing.
+- Caricare TUTTO il contenuto di gintho_sito_prototipo nella root del repository GitHub.
+- Caricare anche community.html per sostituire la vecchia pagina duplicata.
