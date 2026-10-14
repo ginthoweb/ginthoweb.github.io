@@ -1,15 +1,8 @@
-GinTho Web v0.9 — prototipo offline
+GinTho Web v1.0 — anteprima per verifica prima della diffusione pubblica.
+Email: ginthocrono@gmail.com
+Google Play: https://play.google.com/store/apps/details?id=com.regolaritacrono&hl=it
 
-Aprire index.html in Chrome/Edge. I link funzionano anche da cartella locale.
-
-Novità:
-- Gallerie Crono e Timing con didascalie separate dalle immagini (fix sovrapposizione).
-- Adattamento smartphone e pannelli più leggibili.
-- Testi di presentazione aggiornati su Home e pagine software.
-- Nuove FAQ su SPORT offline, cambio dispositivo e demo.
-
-AREA SOCI E LICENZE: esclusivamente dimostrative. Nessuna autenticazione,
-richiesta di adesione, pagamento, invio dati o attivazione reali.
-La richiesta demo produce solo un testo copiabile.
-Non pubblicare come servizio definitivo prima di completare recapiti, privacy,
-condizioni associative e verifiche distributive.
+Caricamento GitHub Pages: estrarre lo ZIP e caricare i CONTENUTI della cartella gintho_sito_prototipo nella radice del repository ginthoweb.github.io (non la cartella contenitore).
+La richiesta demo apre un programma email precompilato e richiede invio manuale.
+Area Soci, adesioni e licenze restano dimostrative; nessun dato reale e nessuna attivazione.
+Privacy ancora da completare e verificare prima della promozione pubblica.
