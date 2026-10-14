@@ -1,0 +1,6 @@
+GinTho Web v1.2.2
+- Menu: unica voce GinTho Sport Community (sport.html).
+- Cache busting: site.js?v=1.2.2 su tutte le pagine.
+- Home: rimosso secondo riquadro duplicato GinTho Sport.
+- community.html: rimane solo come collegamento di reindirizzamento.
+Per aggiornare: caricare tutti i file e la cartella assets nella root del repository GitHub.
