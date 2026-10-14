@@ -1,0 +1,8 @@
+GinTho Web v1.1 — SEO e preparazione pubblicazione
+
+Novità: metadati per pagine pubbliche, URL canonici, sitemap.xml, robots.txt e noindex per sezioni demo/legali provvisorie.
+La pagina privacy.html resta un segnaposto e NON rappresenta una informativa approvata. NON promuovere il sito finché il titolare del trattamento, la privacy e le altre informazioni legali applicabili non sono state definite.
+In GitHub: caricare i file nella root del repository e attendere la pubblicazione Pages.
+Search Console: aggiungere proprietà prefisso URL https://ginthoweb.github.io/ e verificare la proprietà con file HTML, poi inviare sitemap.xml.
+Le pagine di demo non sono protette da autenticazione: noindex non ne impedisce la consultazione pubblica.
+Nessuna integrazione Firebase o tesseramento attivo.
