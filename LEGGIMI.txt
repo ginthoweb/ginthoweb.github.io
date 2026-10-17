@@ -1,12 +1,19 @@
-AGGIORNAMENTO GESTIONE PREISCRIZIONI
+PREISCRIZIONE: VERIFICA EMAIL E INVIO IN UN SOLO CLIC
 
-1. Estrai lo ZIP sul PC.
-2. Nel repository ginthoweb/ginthoweb.github.io carica nella cartella principale i due file HTML e la cartella assets contenuti nello ZIP, mantenendo questi percorsi.
-3. Conferma con Commit changes e attendi il completamento di GitHub Pages.
-4. Apri gestione-preiscrizioni.html e premi Ctrl+F5, poi accedi.
+1. Estrai lo ZIP.
+2. Nel repository ginthoweb/ginthoweb.github.io carica TUTTI i cinque HTML e la cartella assets estratti nella cartella principale, mantenendo i percorsi. Non caricare solo lo ZIP.
+3. Commit changes, attendi GitHub Pages e apri iscrizione.html con ricarica completa. Sullo smartphone chiudi la vecchia scheda e apri nuovamente il link.
 
-Da gestire mostra le richieste ricevute. Segna come contattata le sposta nell'elenco; Chiudi richiesta le archivia. Non vengono eliminate e SPORT resta separato.
-Elenco preiscritti / Archivio permette di filtrare ed esportare tutte le pagine del filtro in CSV. Non è ancora il libro soci.
+Nuovo flusso:
+- L'utente compila nome, cognome, email, password e dichiarazioni PRIMA della verifica.
+- Sceglie Crea account e preiscriviti oppure, se già registrato nell'app, Accedi e preiscriviti.
+- Se l'email non è verificata, riceve da ginthocrono@gmail.com il messaggio Conferma la tua preiscrizione a GinTho Sport.
+- Il clic sul NUOVO collegamento verifica l'email e registra automaticamente la richiesta, anche in un'altra scheda/browser, senza un secondo accesso.
+- La pagina mostra Preiscrizione ricevuta. La ricevuta aggiuntiva viene elaborata ogni cinque minuti.
+- Se l'account ha già l'email verificata, il modulo invia direttamente la richiesta.
 
-Il solo aggiornamento Firebase preregistrationAdminList è già stato pubblicato con autorizzazione. Nessuna richiesta o licenza è stata modificata durante la pubblicazione.
-Le ricevute via Gmail richiedono ancora la configurazione riservata della posta.
+I vecchi collegamenti Firebase già ricevuti verificano soltanto l'account: non possono registrare dati e dichiarazioni non ancora compilati. Per la prova usa il nuovo modulo e il nuovo messaggio. Non occorre cancellare l'account: se esiste già, usa Accedi e preiscriviti.
+
+Il collegamento è riservato e scade dopo 24 ore. Non condividerlo. Le richieste in attesa scadute vengono rimosse dal controllo orario; quelle confermate sono conservate per sei mesi. Nessuna abilitazione SPORT, ammissione associativa o pagamento automatici. I test sono stati svolti sugli emulatori, senza invii reali. La prova sul telefono va eseguita dopo il caricamento web.
+
+La pagina stato-preiscrizione.html serve per consultare e ritirare una richiesta già presentata.
