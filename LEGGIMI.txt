@@ -1,8 +1,1 @@
-GinTho Web v1.0 — anteprima per verifica prima della diffusione pubblica.
-Email: ginthocrono@gmail.com
-Google Play: https://play.google.com/store/apps/details?id=com.regolaritacrono&hl=it
-
-Caricamento GitHub Pages: estrarre lo ZIP e caricare i CONTENUTI della cartella gintho_sito_prototipo nella radice del repository ginthoweb.github.io (non la cartella contenitore).
-La richiesta demo apre un programma email precompilato e richiede invio manuale.
-Area Soci, adesioni e licenze restano dimostrative; nessun dato reale e nessuna attivazione.
-Privacy ancora da completare e verificare prima della promozione pubblica.
+Sostituire statuto-bozza.html e iscrizione.html nella radice del repository esistente. Il nome statuto-bozza.html è conservato per non interrompere i collegamenti. Rimosse quattro note ASI; tutti gli articoli sono invariati. Testo indicato dal promotore come definitivo; nessuna registrazione o affiliazione dichiarata come avvenuta. Nessuna modifica al Word originale o pubblicazione eseguita.
