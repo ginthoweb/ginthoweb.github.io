@@ -1,0 +1,14 @@
+ELIMINAZIONE COMPLETA DI UN ACCOUNT DI PROVA
+
+Questa procedura riguarda gli attuali preiscritti/tester, non la futura gestione del libro soci.
+
+1. In Firebase Authentication > Utenti individua l'email e copia l'UID. L'UID è il codice che collega account e documenti.
+2. Dopo l'aggiornamento della pagina web, usa Disattiva utente: l'account viene bloccato e l'accesso tester SPORT revocato. Verifica che l'operazione risulti completata. Il dispositivo offline recepisce la revoca alla verifica online o alla scadenza del permesso già firmato.
+3. In Authentication > Utenti, sulla sola riga dell'email corretta, apri il menu e scegli Elimina account.
+4. In Firestore > Dati apri licenses e cerca il documento con lo stesso UID. Elimina soltanto quel documento.
+5. Sempre in Firestore, elimina, se presenti, i documenti con quello stesso UID nelle raccolte ginthoPreregistrations e ginthoTesterGrants.
+
+Non eliminare le raccolte intere. Se il documento contiene sottoraccolte inattese o la licenza risulta gestita da un'altra procedura, fermati e verifica prima il contenuto: questo elenco copre i dati creati dall'attuale modulo di preiscrizione e dall'abilitazione tester.
+
+Disattivare non cancella dati. Eliminare l'account Authentication da solo non cancella la licenza o gli altri documenti Firestore.
+Le future dimissioni da socio saranno uno stato associativo separato: non implicano automaticamente l'eliminazione dell'account GinTho usato anche dall'app.
