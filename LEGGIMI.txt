@@ -1,19 +1,13 @@
-PREISCRIZIONE: VERIFICA EMAIL E INVIO IN UN SOLO CLIC
+EMAIL DI PRESA IN CARICO E ABILITAZIONE SPORT
 
-1. Estrai lo ZIP.
-2. Nel repository ginthoweb/ginthoweb.github.io carica TUTTI i cinque HTML e la cartella assets estratti nella cartella principale, mantenendo i percorsi. Non caricare solo lo ZIP.
-3. Commit changes, attendi GitHub Pages e apri iscrizione.html con ricarica completa. Sullo smartphone chiudi la vecchia scheda e apri nuovamente il link.
+Carica su GitHub il file gestione-preiscrizioni.html nella cartella principale e assets/preregistration.js nella cartella assets. Conferma, attendi GitHub Pages e ricarica la pagina con Ctrl+F5, poi accedi.
 
-Nuovo flusso:
-- L'utente compila nome, cognome, email, password e dichiarazioni PRIMA della verifica.
-- Sceglie Crea account e preiscriviti oppure, se già registrato nell'app, Accedi e preiscriviti.
-- Se l'email non è verificata, riceve da ginthocrono@gmail.com il messaggio Conferma la tua preiscrizione a GinTho Sport.
-- Il clic sul NUOVO collegamento verifica l'email e registra automaticamente la richiesta, anche in un'altra scheda/browser, senza un secondo accesso.
-- La pagina mostra Preiscrizione ricevuta. La ricevuta aggiuntiva viene elaborata ogni cinque minuti.
-- Se l'account ha già l'email verificata, il modulo invia direttamente la richiesta.
+Ogni azione ha un significato distinto:
+- Conferma presa in carico: sposta la richiesta fra le contattate e invia una conferma di presa in carico. Non è un'ammissione a socio.
+- Abilita SPORT temporaneamente: previa conferma e scelta dei giorni, concede l'accesso tester e invia un messaggio separato con scadenza e istruzioni per associare lo smartphone.
+- Archivia richiesta: organizza l'elenco; non accetta iscrizioni e non abilita SPORT.
+- Riapri richiesta e prendi in carico: riporta una richiesta archiviata fra le contattate e invia la conferma di presa in carico. Non abilita SPORT.
 
-I vecchi collegamenti Firebase già ricevuti verificano soltanto l'account: non possono registrare dati e dichiarazioni non ancora compilati. Per la prova usa il nuovo modulo e il nuovo messaggio. Non occorre cancellare l'account: se esiste già, usa Accedi e preiscriviti.
+Per la prova salvo.lazzara@gmail.com: la richiesta risulta archiviata e manca la licenza SPORT per l'account attuale. Non è stato modificato questo stato durante l'aggiornamento. Dopo il caricamento, vai in Elenco preiscritti / Archivio, apri la richiesta, premi Riapri richiesta e prendi in carico. Poi scegli i giorni, conferma e premi Abilita SPORT temporaneamente. Non serve cancellare o ricreare l'account.
 
-Il collegamento è riservato e scade dopo 24 ore. Non condividerlo. Le richieste in attesa scadute vengono rimosse dal controllo orario; quelle confermate sono conservate per sei mesi. Nessuna abilitazione SPORT, ammissione associativa o pagamento automatici. I test sono stati svolti sugli emulatori, senza invii reali. La prova sul telefono va eseguita dopo il caricamento web.
-
-La pagina stato-preiscrizione.html serve per consultare e ritirare una richiesta già presentata.
+Le email sono elaborate ogni cinque minuti, con tentativi successivi in caso di errore. Le notifiche SPORT ancora in coda vengono annullate se nel frattempo l'accesso risulta revocato, scaduto o sostituito. Nessuna conferma SPORT viene inviata senza una licenza attiva corrispondente. Le nuove notifiche scadono dopo 24 ore e sono eliminate dal controllo orario.
