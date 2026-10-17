@@ -1,10 +1,11 @@
 import {config} from './preregistration-config.js';
+import {buildCsv} from './preregistration-csv.mjs';
 const el=id=>document.getElementById(id);
 let messageTarget=null;
-function showMessage(value){
+function showMessage(value,error=false){
   const target=messageTarget?.isConnected?messageTarget:el('service-status');
   target.textContent=value;target.hidden=false;
-  target.classList.toggle('message-error',/non valid|errore|troppi|almeno 8|prima\.|non disponibile|devi|conferma|leggi/i.test(value));
+  target.classList.toggle('message-error',error);
   if(target===el('service-status'))target.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 const status={set textContent(value){showMessage(value);}};
@@ -12,10 +13,12 @@ document.addEventListener('click',event=>{messageTarget=event.target.closest('[d
 document.addEventListener('submit',event=>{messageTarget=event.target.closest('[data-service]')?.querySelector('[data-feedback]')||el('service-status');},true);
 const local=['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('test')==='emulator';
 let auth,authSDK,call,busy=false,verifyAfter=0,cursor=null;
+let listView='received',pageNumber=1;
+const testerLabels={none:'Non abilitato',active:'Attivo',expired:'Scaduto',revoked:'Revocato',external:'Gestito con altra procedura'};
 const labels={received:'Ricevuta',contacted:'Contattata',closed:'Chiusa',not_found:'Nessuna preiscrizione attiva'};
 async function run(action) {
   if(busy)return;busy=true;document.querySelectorAll('button').forEach(b=>b.disabled=true);
-  try{await action();}catch(error){status.textContent=messages[error.code] || error.message || 'Operazione non riuscita. Riprova.';}
+  try{await action();}catch(error){showMessage(messages[error.code] || error.message || 'Operazione non riuscita. Riprova.',true);}
   finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);}
 }
 const messages={'auth/invalid-credential':'Email o password non valide.','auth/email-already-in-use':'Questo account esiste già: usa Accedi oppure Recupera password.','auth/too-many-requests':'Troppi tentativi: attendi prima di riprovare.','auth/weak-password':'Scegli una password più robusta.','functions/unauthenticated':'Accedi per continuare.','functions/permission-denied':'Verifica l’email o accedi con un account autorizzato.','functions/unavailable':'Servizio temporaneamente non disponibile.','functions/failed-precondition':'Ricezione non ancora disponibile o richiesta scaduta. Contatta GinTho.','functions/aborted':'La richiesta è cambiata: ricarica l’elenco.'};
@@ -81,26 +84,55 @@ if(!local && (!config.enabled || !config.firebase || !config.appCheckSiteKey)) {
     el('withdraw')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=false;});
     el('withdraw-cancel')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=true;});
     el('withdraw-confirm')?.addEventListener('click',()=>run(async()=>{await call('preregistrationWithdraw');el('withdraw-confirmation').hidden=true;if(el('receipt-step')){el('receipt-step').hidden=true;el('manage-request').hidden=true;el('progress-request').classList.remove('complete');el('request-fields').disabled=false;messageTarget=el('request-step').querySelector('[data-feedback]');advance('request-step');}status.textContent='Preiscrizione ritirata e cancellata. L’account condiviso con l’app e le autorizzazioni SPORT restano invariati.';}));
-    el('load-requests')?.addEventListener('click',()=>{cursor=null;run(load);});
-    el('next-requests')?.addEventListener('click',()=>run(load));
+    el('load-requests')?.addEventListener('click',()=>{cursor=null;pageNumber=1;run(load);});
+    el('next-requests')?.addEventListener('click',()=>{pageNumber++;run(load);});
+    el('tab-pending')?.addEventListener('click',()=>selectView('received'));
+    el('tab-directory')?.addEventListener('click',()=>selectView(el('directory-filter').value));
+    el('directory-filter')?.addEventListener('change',()=>selectView(el('directory-filter').value));
+    function selectView(view){
+      if(busy)return;listView=view;cursor=null;pageNumber=1;
+      el('tab-pending').setAttribute('aria-pressed',String(view==='received'));
+      el('tab-directory').setAttribute('aria-pressed',String(view!=='received'));
+      el('directory-controls').hidden=view==='received';
+      el('list-heading').textContent=view==='received'?'Richieste da gestire':'Elenco preiscritti e archivio';
+      run(load);
+    }
+    el('export-requests')?.addEventListener('click',()=>run(async()=>{
+      messageTarget=el('list-feedback');const rows=[];let next=null;let pages=0;const seen=new Set();const view=listView;
+      do{
+        if(++pages>200)throw Error('Elenco troppo ampio: usa un filtro più specifico. Nessun file parziale creato.');
+        status.textContent=`Esportazione in corso: ${rows.length} righe raccolte…`;
+        const result=await call('preregistrationAdminList',{view,...(next?{cursor:next}:{})});
+        for(const row of result.rows)if(!seen.has(row.id)){seen.add(row.id);rows.push(row);}
+        if(result.cursor===next && next)throw Error('Esportazione interrotta: cursore non aggiornato. Nessun file parziale creato.');
+        next=result.cursor;
+        if(rows.length>10000)throw Error('Elenco oltre 10.000 righe: usa un filtro più specifico. Nessun file parziale creato.');
+      }while(next);
+      if(!rows.length){status.textContent='Nessun preiscritto da esportare con questo filtro.';return;}
+      const url=URL.createObjectURL(new Blob([buildCsv(rows)],{type:'text/csv;charset=utf-8;'}));
+      const link=document.createElement('a');link.href=url;link.download=`GinTho-preiscritti-${view}-${new Date().toISOString().slice(0,10)}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      status.textContent=`Esportate ${rows.length} righe in CSV, includendo tutte le pagine del filtro scelto. È un elenco preiscritti, non il libro soci. Conserva il file con accesso riservato e cancellalo quando non serve più.`;
+    }));
     async function load(){
       messageTarget=el('requests').parentElement.querySelector(':scope > [data-feedback]')||messageTarget;
-      const result=await call('preregistrationAdminList',cursor?{cursor}:{});cursor=result.cursor;
+      const result=await call('preregistrationAdminList',{view:listView,...(cursor?{cursor}:{})});cursor=result.cursor;
+      if(el('page-label'))el('page-label').textContent=`Pagina ${pageNumber} · ${result.rows.length} richieste`;
       const target=el('requests');target.replaceChildren();el('next-requests').hidden=!cursor;
       for(const row of result.rows){const article=document.createElement('article');article.className='card';article.setAttribute('data-service','');
+        let cardBody=article;if(listView!=='received'){const disclosure=document.createElement('details');const summary=document.createElement('summary');summary.textContent=`${row.firstName} ${row.lastName} · ${row.email} · ${labels[row.status]} · SPORT ${testerLabels[row.testerAccess?.status]||'Non abilitato'}`;cardBody=document.createElement('div');disclosure.append(summary,cardBody);article.append(disclosure);}
         const title=document.createElement('h2');title.textContent=`${row.firstName} ${row.lastName}`;
-        const details=document.createElement('p');details.textContent=`${row.email} · UID ${row.id} · ${labels[row.status]} · Interesse tester: ${row.testerInterest?'sì':'no'} · Scadenza ${new Date(row.expiresAt).toLocaleDateString('it-IT')}`;article.append(title,details);
-        for(const [next,label] of (row.status==='received'?[['contacted','Segna come contattata'],['closed','Chiudi richiesta']]:row.status==='contacted'?[['closed','Chiudi richiesta']]:[])){const button=document.createElement('button');button.className='btn secondary';button.textContent=label;button.onclick=()=>run(async()=>{await call('preregistrationAdminReview',{id:row.id,revision:row.revision,status:next});cursor=null;await load();});article.append(button);}
+        const details=document.createElement('p');details.textContent=`${row.email} · UID ${row.id} · ${labels[row.status]} · Interesse tester: ${row.testerInterest?'sì':'no'} · Scadenza ${new Date(row.expiresAt).toLocaleDateString('it-IT')}`;cardBody.append(title,details);
+        for(const [next,label] of (row.status==='received'?[['contacted','Segna come contattata'],['closed','Archivia richiesta']]:row.status==='contacted'?[['closed','Archivia richiesta']]:[])){const button=document.createElement('button');button.className='btn secondary';button.textContent=label;button.onclick=()=>run(async()=>{await call('preregistrationAdminReview',{id:row.id,revision:row.revision,status:next});cursor=null;pageNumber=1;await load();});cardBody.append(button);}
         target.append(article);
-        const access=document.createElement('p');access.textContent='Accesso tester: '+(row.testerAccess?.status||'none')+(row.testerAccess?.expiresAt?' · scadenza '+new Date(row.testerAccess.expiresAt).toLocaleDateString('it-IT'):'');article.append(access);
+        const access=document.createElement('p');access.textContent='Accesso tester: '+(testerLabels[row.testerAccess?.status]||'Non abilitato')+(row.testerAccess?.expiresAt?' · scadenza '+new Date(row.testerAccess.expiresAt).toLocaleDateString('it-IT'):'');cardBody.append(access);
         if(row.testerAccess?.status!=='external'){
           const days=document.createElement('input');days.type='number';days.min='1';days.max='30';days.value='7';days.setAttribute('aria-label','Giorni di prova per '+row.email);
           const consent=document.createElement('input');consent.type='checkbox';const label=document.createElement('label');label.append(consent,document.createTextNode(' Confermo l’abilitazione o revoca tester per questo account. Non è un’ammissione associativa.'));
-          const note=document.createElement('p');note.textContent='Una revoca non raggiunge un dispositivo offline fino alla verifica online o alla scadenza del permesso già firmato.';article.append(days,label,note);
-          for(const [action,text] of [['grant','Abilita SPORT temporaneamente'],['revoke','Revoca accesso tester']]){const b=document.createElement('button');b.className='btn secondary';b.textContent=text;b.onclick=()=>run(async()=>{if(!consent.checked)throw Error('Conferma l’operazione sul tester selezionato.');if(action==='grant'&&!days.reportValidity())return;const result=await call('preregistrationTesterAccess',{id:row.id,action,...(action==='grant'?{days:Number(days.value)}:{}),confirmed:true});consent.checked=false;status.textContent='Operazione tester: '+result.action+(result.expiresAt?' · scadenza '+new Date(result.expiresAt).toLocaleDateString('it-IT'):'')+'. Ricarica l’elenco per aggiornare lo stato.';});article.append(b);}
-        }else{const note=document.createElement('p');note.textContent='Licenza gestita dalla procedura esistente: questa pagina non la modifica.';article.append(note);}
-        const feedback=document.createElement('p');feedback.className='feedback';feedback.setAttribute('data-feedback','');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');feedback.hidden=true;article.append(feedback);
-      }status.textContent=`${result.rows.length} richieste in questa pagina. SPORT richiede una tua operazione e conferma separate.`;
+          const note=document.createElement('p');note.textContent='Una revoca non raggiunge un dispositivo offline fino alla verifica online o alla scadenza del permesso già firmato.';cardBody.append(days,label,note);
+          for(const [action,text] of [['grant','Abilita SPORT temporaneamente'],['revoke','Revoca accesso tester']]){const b=document.createElement('button');b.className='btn secondary';b.textContent=text;b.onclick=()=>run(async()=>{if(!consent.checked)throw Error('Conferma l’operazione sul tester selezionato.');if(action==='grant'&&!days.reportValidity())return;const result=await call('preregistrationTesterAccess',{id:row.id,action,...(action==='grant'?{days:Number(days.value)}:{}),confirmed:true});consent.checked=false;status.textContent='Operazione tester: '+result.action+(result.expiresAt?' · scadenza '+new Date(result.expiresAt).toLocaleDateString('it-IT'):'')+'. Ricarica l’elenco per aggiornare lo stato.';});cardBody.append(b);}
+        }else{const note=document.createElement('p');note.textContent='Licenza gestita dalla procedura esistente: questa pagina non la modifica.';cardBody.append(note);}
+        const feedback=document.createElement('p');feedback.className='feedback';feedback.setAttribute('data-feedback','');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');feedback.hidden=true;cardBody.append(feedback);
+      }status.textContent=listView==='received'?`${result.rows.length} richieste da gestire in questa pagina. Quelle contattate o archiviate restano nell’elenco preiscritti.`:`${result.rows.length} preiscritti in questa pagina. L’archiviazione non cancella i dati e non revoca SPORT. Il CSV include tutte le pagine del filtro selezionato.`;
     }
   }catch(error){status.textContent='Collegamento non disponibile: '+error.message;document.querySelectorAll('[data-service]').forEach(section=>section.inert=true);}
 }

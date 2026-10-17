@@ -1,1 +1,12 @@
-Sostituire statuto-bozza.html e iscrizione.html nella radice del repository esistente. Il nome statuto-bozza.html è conservato per non interrompere i collegamenti. Rimosse quattro note ASI; tutti gli articoli sono invariati. Testo indicato dal promotore come definitivo; nessuna registrazione o affiliazione dichiarata come avvenuta. Nessuna modifica al Word originale o pubblicazione eseguita.
+AGGIORNAMENTO GESTIONE PREISCRIZIONI
+
+1. Estrai lo ZIP sul PC.
+2. Nel repository ginthoweb/ginthoweb.github.io carica nella cartella principale i due file HTML e la cartella assets contenuti nello ZIP, mantenendo questi percorsi.
+3. Conferma con Commit changes e attendi il completamento di GitHub Pages.
+4. Apri gestione-preiscrizioni.html e premi Ctrl+F5, poi accedi.
+
+Da gestire mostra le richieste ricevute. Segna come contattata le sposta nell'elenco; Chiudi richiesta le archivia. Non vengono eliminate e SPORT resta separato.
+Elenco preiscritti / Archivio permette di filtrare ed esportare tutte le pagine del filtro in CSV. Non è ancora il libro soci.
+
+Il solo aggiornamento Firebase preregistrationAdminList è già stato pubblicato con autorizzazione. Nessuna richiesta o licenza è stata modificata durante la pubblicazione.
+Le ricevute via Gmail richiedono ancora la configurazione riservata della posta.
