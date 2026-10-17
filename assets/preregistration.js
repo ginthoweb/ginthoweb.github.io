@@ -1,6 +1,15 @@
 import {config} from './preregistration-config.js';
 const el=id=>document.getElementById(id);
-const status=el('service-status');
+let messageTarget=null;
+function showMessage(value){
+  const target=messageTarget?.isConnected?messageTarget:el('service-status');
+  target.textContent=value;target.hidden=false;
+  target.classList.toggle('message-error',/non valid|errore|troppi|almeno 8|prima\.|non disponibile|devi|conferma|leggi/i.test(value));
+  if(target===el('service-status'))target.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+const status={set textContent(value){showMessage(value);}};
+document.addEventListener('click',event=>{messageTarget=event.target.closest('[data-service]')?.querySelector('[data-feedback]')||el('service-status');},true);
+document.addEventListener('submit',event=>{messageTarget=event.target.closest('[data-service]')?.querySelector('[data-feedback]')||el('service-status');},true);
 const local=['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('test')==='emulator';
 let auth,authSDK,call,busy=false,verifyAfter=0,cursor=null;
 const labels={received:'Ricevuta',contacted:'Contattata',closed:'Chiusa',not_found:'Nessuna preiscrizione attiva'};
@@ -10,7 +19,30 @@ async function run(action) {
   finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);}
 }
 const messages={'auth/invalid-credential':'Email o password non valide.','auth/email-already-in-use':'Questo account esiste già: usa Accedi oppure Recupera password.','auth/too-many-requests':'Troppi tentativi: attendi prima di riprovare.','auth/weak-password':'Scegli una password più robusta.','functions/unauthenticated':'Accedi per continuare.','functions/permission-denied':'Verifica l’email o accedi con un account autorizzato.','functions/unavailable':'Servizio temporaneamente non disponibile.','functions/failed-precondition':'Ricezione non ancora disponibile o richiesta scaduta. Contatta GinTho.','functions/aborted':'La richiesta è cambiata: ricarica l’elenco.'};
-function receipt(data){status.textContent=`${local?'PROVA LOCALE — ':''}${labels[data.status]||data.status}${data.id?' · Riferimento: '+data.id:''}${data.expiresAt?' · Termine conservazione: '+new Date(data.expiresAt).toLocaleDateString('it-IT'):''}. Nessun pagamento richiesto. Nessuna abilitazione SPORT assegnata.`;}
+function advance(id){const target=el(id);if(!target)return;target.scrollIntoView({block:'start',behavior:'smooth'});target.querySelector('h2')?.focus({preventScroll:true});}
+function updateSteps(user){
+  if(!el('email-step'))return;
+  const verified=!!user?.emailVerified;
+  el('login-form').hidden=!!user;el('session-actions').hidden=!user;
+  if(user)el('account-step').querySelector('[data-feedback]').hidden=true;
+  el('email-step').hidden=!user || verified;
+  el('request-fields').disabled=!verified;
+  el('request-locked').hidden=verified;
+  el('request-step').classList.toggle('step-locked',!verified);
+  el('progress-account').classList.toggle('complete',!!user);
+  el('progress-email').classList.toggle('complete',verified);
+  el('account-state').textContent=user?`Accesso: ${user.email}${verified?' · email verificata':' · verifica email richiesta'}`:'Crea un account oppure accedi con quello che usi già nell’app.';
+}
+function receipt(data){
+  if(el('email-step')){
+    const received=data.status!=='not_found';
+    el('receipt-step').hidden=!received;el('manage-request').hidden=!received;
+    el('request-fields').disabled=received || !auth?.currentUser?.emailVerified;
+    el('progress-request').classList.toggle('complete',received);
+    if(received){el('request-step').querySelector('[data-feedback]').hidden=true;el('receipt-data').textContent=`Stato: ${labels[data.status]||data.status}. Riferimento: ${data.id}. Conservazione fino al ${new Date(data.expiresAt).toLocaleDateString('it-IT')}. Nessun pagamento richiesto; SPORT non viene abilitato automaticamente.`;messageTarget=el('receipt-step').querySelector('[data-feedback]');status.textContent=local?'PROVA LOCALE — preiscrizione ricevuta.':'Preiscrizione inviata e ricevuta correttamente.';advance('receipt-step');}
+    else{messageTarget=el('request-step').querySelector('[data-feedback]');status.textContent='Email verificata. Ora completa i dati e premi “Invia la preiscrizione gratuita”. La richiesta non è ancora stata inviata.';advance('request-step');}
+  }else status.textContent=`${labels[data.status]||data.status}${data.id?' · Riferimento: '+data.id:''}. La verifica email non presenta una preiscrizione.`;
+}
 if(!local && (!config.enabled || !config.firebase || !config.appCheckSiteKey)) {
   status.textContent='Preiscrizioni non ancora aperte: collegamento Firebase in preparazione. Nessun dato può essere inviato da questa pagina.';
 } else {
@@ -28,24 +60,34 @@ if(!local && (!config.enabled || !config.firebase || !config.appCheckSiteKey)) {
     call=async(name,data={})=>(await f.httpsCallable(functions,name)(data)).data;
     document.querySelectorAll('[data-service]').forEach(section=>section.inert=false);
     status.textContent=local?'PROVA LOCALE: usa solo dati inventati. Le email appaiono nel terminale Auth.':'Accedi o crea un account, verifica l’email e presenta la preiscrizione.';
-    a.onAuthStateChanged(auth,user=>{el('account-state').textContent=user?`Accesso: ${user.email} · ${user.emailVerified?'email verificata':'email da verificare'}`:'Non hai effettuato l’accesso.';el('requests')?.replaceChildren();});
+    el('service-status').hidden=true;
+    a.onAuthStateChanged(auth,user=>{el('account-state').textContent=user?`Accesso: ${user.email} · ${user.emailVerified?'email verificata':'email da verificare'}`:'Non hai effettuato l’accesso.';updateSteps(user);if(!el('email-step'))el('login-form').hidden=!!user;el('requests')?.replaceChildren();if(!user && el('receipt-step')){el('receipt-step').hidden=true;el('manage-request').hidden=true;el('preregistration-form').reset();}});
+    async function syncAccount(){
+      if(!auth.currentUser)throw Error('Accedi prima.');await a.reload(auth.currentUser);await auth.currentUser.getIdToken(true);updateSteps(auth.currentUser);
+      if(!auth.currentUser.emailVerified){messageTarget=el('email-step')?.querySelector('[data-feedback]')||messageTarget;status.textContent='Email non ancora verificata. Apri il link ricevuto e poi premi “Ho verificato l’email: continua”.';if(el('email-step'))advance('email-step');return;}
+      if(el('email-step'))receipt(await call('preregistrationStatus'));
+      else{el('account-state').textContent=`Accesso: ${auth.currentUser.email} · email verificata`;status.textContent='Accesso verificato. Premi “Carica richieste” nella sezione qui sotto.';}
+    }
     const credentials=()=>({email:el('account-email').value.trim(),password:el('account-password').value});
-    el('login-form').onsubmit=event=>{event.preventDefault();run(async()=>{const c=credentials();await a.signInWithEmailAndPassword(auth,c.email,c.password);el('account-password').value='';status.textContent='Accesso eseguito. Premi Aggiorna sessione e stato.';});};
-    el('register').onclick=()=>run(async()=>{if(!el('login-form').reportValidity())return;if(!el('account-privacy').checked)throw Error('Leggi e conferma l’informativa prima di creare l’account.');const c=credentials();if(c.password.length<8)throw Error('Per un nuovo account usa almeno 8 caratteri.');await a.createUserWithEmailAndPassword(auth,c.email,c.password);el('account-password').value='';status.textContent='Account creato. Premi Invia email di verifica. Non è stata ancora presentata una preiscrizione.';});
+    el('login-form').onsubmit=event=>{event.preventDefault();run(async()=>{const c=credentials();await a.signInWithEmailAndPassword(auth,c.email,c.password);el('account-password').value='';await syncAccount();});};
+    el('register').onclick=()=>run(async()=>{if(!el('login-form').reportValidity())return;if(!el('account-privacy').checked)throw Error('Leggi e conferma l’informativa prima di creare l’account.');const c=credentials();if(c.password.length<8)throw Error('Per un nuovo account usa almeno 8 caratteri.');await a.createUserWithEmailAndPassword(auth,c.email,c.password);el('account-password').value='';updateSteps(auth.currentUser);messageTarget=el('email-step')?.querySelector('[data-feedback]')||messageTarget;if(el('email-step'))advance('email-step');status.textContent='Account creato. Invio dell’email di verifica in corso…';try{await a.sendEmailVerification(auth.currentUser,{url:location.origin+'/iscrizione.html',handleCodeInApp:false});verifyAfter=Date.now()+60000;status.textContent=local?'PROVA LOCALE: link di verifica nel terminale Auth.':'Email di verifica inviata. Apri il link ricevuto, poi torna qui per completare i dati. Non è stata ancora inviata una preiscrizione.';}catch(error){status.textContent='Account creato, ma non è stato possibile inviare l’email. Premi “Invia di nuovo l’email” tra qualche istante.';}});
     el('reset-password').onclick=()=>run(async()=>{const email=el('account-email');if(!email.value || !email.reportValidity())return;await a.sendPasswordResetEmail(auth,email.value.trim());status.textContent='Se l’account è disponibile, riceverai le istruzioni di recupero.';});
     el('verify').onclick=()=>run(async()=>{if(!auth.currentUser)throw Error('Accedi prima.');if(Date.now()<verifyAfter)throw Error('Attendi un minuto prima di richiedere un altro messaggio.');await a.sendEmailVerification(auth.currentUser,{url:location.origin+'/iscrizione.html',handleCodeInApp:false});verifyAfter=Date.now()+60000;status.textContent=local?'Link di verifica nel terminale Auth: nessuna email reale inviata.':'Email di verifica richiesta. Controlla anche la posta indesiderata, poi torna qui e aggiorna la sessione.';});
-    el('refresh').onclick=()=>run(async()=>{if(!auth.currentUser)throw Error('Accedi prima.');await a.reload(auth.currentUser);await auth.currentUser.getIdToken(true);el('account-state').textContent=`${auth.currentUser.email} · ${auth.currentUser.emailVerified?'email verificata':'email da verificare'}`;receipt(await call('preregistrationStatus'));});
+    el('refresh').onclick=()=>run(syncAccount);
+    let checkedAt=0;
+    window.addEventListener('focus',()=>{if(el('email-step') && auth.currentUser && !auth.currentUser.emailVerified && !busy && Date.now()-checkedAt>10000){checkedAt=Date.now();run(syncAccount);}});
     el('signout').onclick=()=>run(async()=>{await a.signOut(auth);el('requests')?.replaceChildren();status.textContent='Sessione chiusa.';});
     el('preregistration-form')?.addEventListener('submit',event=>{event.preventDefault();run(async()=>{const form=event.currentTarget;if(!form.reportValidity())return;const input={firstName:el('first-name').value,lastName:el('last-name').value,adult:el('adult').checked,privacyRead:el('privacy-read').checked,termsRead:el('terms-read').checked,testerInterest:el('tester-interest').checked,privacyVersion:'preregistration-2026-10-17-v1'};receipt(await call('preregistrationSubmit',input));});});
     el('withdraw')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=false;});
     el('withdraw-cancel')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=true;});
-    el('withdraw-confirm')?.addEventListener('click',()=>run(async()=>{await call('preregistrationWithdraw');el('withdraw-confirmation').hidden=true;status.textContent='Preiscrizione ritirata e cancellata. L’account condiviso con l’app e le autorizzazioni SPORT restano invariati.';}));
+    el('withdraw-confirm')?.addEventListener('click',()=>run(async()=>{await call('preregistrationWithdraw');el('withdraw-confirmation').hidden=true;if(el('receipt-step')){el('receipt-step').hidden=true;el('manage-request').hidden=true;el('progress-request').classList.remove('complete');el('request-fields').disabled=false;messageTarget=el('request-step').querySelector('[data-feedback]');advance('request-step');}status.textContent='Preiscrizione ritirata e cancellata. L’account condiviso con l’app e le autorizzazioni SPORT restano invariati.';}));
     el('load-requests')?.addEventListener('click',()=>{cursor=null;run(load);});
     el('next-requests')?.addEventListener('click',()=>run(load));
     async function load(){
+      messageTarget=el('requests').parentElement.querySelector(':scope > [data-feedback]')||messageTarget;
       const result=await call('preregistrationAdminList',cursor?{cursor}:{});cursor=result.cursor;
       const target=el('requests');target.replaceChildren();el('next-requests').hidden=!cursor;
-      for(const row of result.rows){const article=document.createElement('article');article.className='card';
+      for(const row of result.rows){const article=document.createElement('article');article.className='card';article.setAttribute('data-service','');
         const title=document.createElement('h2');title.textContent=`${row.firstName} ${row.lastName}`;
         const details=document.createElement('p');details.textContent=`${row.email} · UID ${row.id} · ${labels[row.status]} · Interesse tester: ${row.testerInterest?'sì':'no'} · Scadenza ${new Date(row.expiresAt).toLocaleDateString('it-IT')}`;article.append(title,details);
         for(const [next,label] of (row.status==='received'?[['contacted','Segna come contattata'],['closed','Chiudi richiesta']]:row.status==='contacted'?[['closed','Chiudi richiesta']]:[])){const button=document.createElement('button');button.className='btn secondary';button.textContent=label;button.onclick=()=>run(async()=>{await call('preregistrationAdminReview',{id:row.id,revision:row.revision,status:next});cursor=null;await load();});article.append(button);}
@@ -57,6 +99,7 @@ if(!local && (!config.enabled || !config.firebase || !config.appCheckSiteKey)) {
           const note=document.createElement('p');note.textContent='Una revoca non raggiunge un dispositivo offline fino alla verifica online o alla scadenza del permesso già firmato.';article.append(days,label,note);
           for(const [action,text] of [['grant','Abilita SPORT temporaneamente'],['revoke','Revoca accesso tester']]){const b=document.createElement('button');b.className='btn secondary';b.textContent=text;b.onclick=()=>run(async()=>{if(!consent.checked)throw Error('Conferma l’operazione sul tester selezionato.');if(action==='grant'&&!days.reportValidity())return;const result=await call('preregistrationTesterAccess',{id:row.id,action,...(action==='grant'?{days:Number(days.value)}:{}),confirmed:true});consent.checked=false;status.textContent='Operazione tester: '+result.action+(result.expiresAt?' · scadenza '+new Date(result.expiresAt).toLocaleDateString('it-IT'):'')+'. Ricarica l’elenco per aggiornare lo stato.';});article.append(b);}
         }else{const note=document.createElement('p');note.textContent='Licenza gestita dalla procedura esistente: questa pagina non la modifica.';article.append(note);}
+        const feedback=document.createElement('p');feedback.className='feedback';feedback.setAttribute('data-feedback','');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');feedback.hidden=true;article.append(feedback);
       }status.textContent=`${result.rows.length} richieste in questa pagina. SPORT richiede una tua operazione e conferma separate.`;
     }
   }catch(error){status.textContent='Collegamento non disponibile: '+error.message;document.querySelectorAll('[data-service]').forEach(section=>section.inert=true);}
