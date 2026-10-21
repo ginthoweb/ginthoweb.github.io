@@ -84,6 +84,24 @@ if(!local && (!config.enabled || !config.firebase || !config.appCheckSiteKey)) {
     el('withdraw')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=false;});
     el('withdraw-cancel')?.addEventListener('click',()=>{el('withdraw-confirmation').hidden=true;});
     el('withdraw-confirm')?.addEventListener('click',()=>run(async()=>{await call('preregistrationWithdraw');el('withdraw-confirmation').hidden=true;if(el('receipt-step')){el('receipt-step').hidden=true;el('manage-request').hidden=true;el('progress-request').classList.remove('complete');el('request-fields').disabled=false;messageTarget=el('request-step').querySelector('[data-feedback]');advance('request-step');}status.textContent='Preiscrizione ritirata e cancellata. L’account condiviso con l’app e le autorizzazioni SPORT restano invariati.';}));
+    let manualAccount=null;
+    function clearManual(){manualAccount=null;if(el('manual-controls')){el('manual-controls').hidden=true;el('manual-confirm').checked=false;el('manual-account').textContent='';}}
+    function showManual(row){
+      manualAccount=row;el('manual-account').textContent=row.email+' · UID '+row.uid+' · '+(row.disabled?'Account disattivato':'Account attivo')+' · '+(row.emailVerified?'Email verificata':'Email non verificata')+' · SPORT '+(testerLabels[row.status]||row.status)+(row.expiresAt?' · scadenza '+new Date(row.expiresAt).toLocaleString('it-IT'):'');
+      el('manual-controls').hidden=row.disabled||row.status==='external';el('manual-confirm').checked=false;
+    }
+    el('manual-email')?.addEventListener('input',clearManual);
+    a.onAuthStateChanged(auth,clearManual);
+    el('manual-tester-form')?.addEventListener('submit',event=>{event.preventDefault();run(async()=>{
+      clearManual();showManual(await call('preregistrationManualTester',{email:el('manual-email').value.trim(),action:'lookup'}));
+      status.textContent='Account trovato. Controlla email e stato prima di confermare.';
+    });});
+    for(const action of ['grant','revoke'])el('manual-'+action)?.addEventListener('click',()=>run(async()=>{
+      if(!manualAccount||!el('manual-confirm').checked)throw Error('Cerca l’account e conferma l’operazione.');
+      if(action==='grant'&&!el('manual-days').reportValidity())return;
+      const row=await call('preregistrationManualTester',{email:manualAccount.email,uid:manualAccount.uid,action,confirmed:true,...(action==='grant'?{days:Number(el('manual-days').value)}:{})});
+      showManual(row);status.textContent=(action==='grant'?'SPORT abilitato fino al '+new Date(row.expiresAt).toLocaleString('it-IT'):'Accesso tester revocato')+'. Nessuna email automatica inviata. Nessuna preiscrizione creata.';
+    }));
     el('load-requests')?.addEventListener('click',()=>{cursor=null;pageNumber=1;run(load);});
     el('next-requests')?.addEventListener('click',()=>{pageNumber++;run(load);});
     el('tab-pending')?.addEventListener('click',()=>selectView('received'));
